@@ -84,8 +84,8 @@ public class CurrencyServiceTests
     public async Task GetHistoricalRatesAsync_ShouldReturnExpectedHistoricalRates()
     {
         const string baseCurrency = "EUR";
-        const string startDate = "2020-01-01";
-        const string endDate = "2020-01-31";
+        DateTime startDate = new DateTime(2020, 1, 1);
+        DateTime endDate = new DateTime(2020, 1, 31);
         
         var expectedHistoricalRates = new HistoricalRatesResponse
         {
@@ -94,7 +94,8 @@ public class CurrencyServiceTests
             {
                 { "2020-01-01", new Dictionary<string, decimal> { { "USD", 1.1m } } },
                 { "2020-01-02", new Dictionary<string, decimal> { { "USD", 1.2m } } }
-            }
+            },
+            TotalCount = 2
         };
 
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK, JsonSerializer.Serialize(expectedHistoricalRates));
