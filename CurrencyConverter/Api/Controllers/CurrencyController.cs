@@ -30,7 +30,7 @@ public class CurrencyController : ControllerBase
     }
 
     [HttpGet("historical")]
-    public async Task<IActionResult> GetHistoricalRates([FromQuery] string baseCurrency, [FromQuery] string startDate, [FromQuery] string endDate, [FromQuery] int page, [FromQuery] int pageSize)
+    public async Task<IActionResult> GetHistoricalRates([FromQuery] string baseCurrency, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] int page, [FromQuery] int pageSize)
     {
         var result = await _currencyService.GetHistoricalRatesAsync(baseCurrency, startDate, endDate, page, pageSize);
         return Ok(result);

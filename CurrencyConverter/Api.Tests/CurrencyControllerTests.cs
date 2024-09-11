@@ -88,8 +88,8 @@ public class CurrencyControllerTests
     {
         //Arrange
         var baseCurrency = "EUR";
-        var startDate = "2020-01-01";
-        var endDate = "2020-01-31";
+        var startDate = DateTime.Today.AddDays(-2);
+        var endDate = DateTime.Today;
         var page = 1;
         var pageSize = 10;
         var historicalRates = new HistoricalRatesResponse

@@ -11,7 +11,7 @@ public interface ICurrencyService
     Task<ExchangeRatesResponse> GetLatestRatesAsync(string baseCurrency);
     Task<ConversionResult> ConvertCurrencyAsync(string from, string to, decimal amount);
 
-    Task<HistoricalRatesResponse> GetHistoricalRatesAsync(string baseCurrency, string startDate, string endDate,
+    Task<HistoricalRatesResponse> GetHistoricalRatesAsync(string baseCurrency, DateTime startDate, DateTime endDate,
         int page, int pageSize);
 }
 
@@ -57,7 +57,7 @@ public class CurrencyService : ICurrencyService
 
         var client = _httpClientFactory.CreateClient("frankfurter");
         var response =
-            await _retryPolicy.ExecuteAsync(() => client.GetAsync($"latest?base={from}&to={to}&amount={amount}"));
+            await _retryPolicy.ExecuteAsync(() => client.GetAsync($"latest?from={from}&to={to}&amount={amount}"));
 
         if (!response.IsSuccessStatusCode)
         {
@@ -65,6 +65,7 @@ public class CurrencyService : ICurrencyService
             {
                 throw new ArgumentException($"Conversion rate from {from} to {to} not found.");
             }
+
             _logger.LogError($"Failed to fetch conversion rate: {response.ReasonPhrase}");
             throw new HttpRequestException("Failed to fetch data from the Frankfurter API.");
         }
@@ -82,16 +83,16 @@ public class CurrencyService : ICurrencyService
                 Rates = rate.Rates
             };
         }
-        
+
         throw new ArgumentException($"Conversion rate from {from} to {to} not found.");
     }
 
-    public async Task<HistoricalRatesResponse> GetHistoricalRatesAsync(string baseCurrency, string startDate,
-        string endDate, int page, int pageSize)
+    public async Task<HistoricalRatesResponse> GetHistoricalRatesAsync(string baseCurrency, DateTime startDate,
+        DateTime endDate, int page, int pageSize)
     {
         var client = _httpClientFactory.CreateClient("frankfurter");
         var response = await _retryPolicy.ExecuteAsync(() =>
-            client.GetAsync($"history?start_at={startDate}&end_at={endDate}&base={baseCurrency}"));
+            client.GetAsync($"/{startDate:yyyy-MM-dd}..{endDate:yyyy-MM-dd}?base={baseCurrency}&pageSize=10&page=1"));
 
         if (!response.IsSuccessStatusCode)
         {
@@ -100,6 +101,10 @@ public class CurrencyService : ICurrencyService
         }
 
         var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<HistoricalRatesResponse>(content);
+        var result = JsonConvert.DeserializeObject<HistoricalRatesResponse>(content);
+        result.TotalCount = result.Rates.Count;
+        result.Rates = result.Rates.Skip((page - 1) * pageSize).Take(pageSize).ToDictionary();
+        
+        return result;
     }
 }
